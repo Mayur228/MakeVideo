@@ -14,8 +14,7 @@ import com.otaliastudios.cameraview.controls.Mode
 import java.io.File
 import java.util.*
 import android.os.Environment
-
-
+import com.otaliastudios.cameraview.controls.Facing
 
 
 class MainActivity : AppCompatActivity() {
@@ -25,22 +24,19 @@ class MainActivity : AppCompatActivity() {
         binding = DataBindingUtil.setContentView(this,R.layout.activity_main)
 
         setUpView()
-
+        setupButtonListener()
     }
 
     private fun setUpView() {
         binding.camera.open()
         binding.camera.mode = Mode.VIDEO
-        binding.recodeVideo.setOnClickListener {
-            recodeVideo()
-        }
     }
 
     private fun setUpImages() {
         val emojis = listOf<Int>(R.drawable.hand_emoji_1,R.drawable.hand_emoji_2,R.drawable.hand_emoji_3)
         val ran = Random()
         val i: Int = ran.nextInt(emojis.size)
-        binding.emojiIV.setImageResource(emojis.get(i))
+        binding.emojiIV.setImageResource(emojis[i])
         if (binding.camera.isTakingVideo) {
             startTimer().start()
         }else {
@@ -61,13 +57,30 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private fun setupButtonListener() {
+        binding.recodeVideo.setOnClickListener {
+            if (binding.camera.isTakingVideo) {
+                binding.camera.stopVideo()
+            }else{
+                recodeVideo()
+            }
+        }
+
+        binding.flipCamera.setOnClickListener {
+            if (binding.camera.facing == Facing.FRONT){
+                binding.camera.facing = Facing.BACK
+            }else{
+                binding.camera.facing = Facing.FRONT
+            }
+        }
+    }
+
     private fun recodeVideo() {
         binding.camera.addCameraListener(object : CameraListener() {
             override fun onVideoRecordingStart() {
                 super.onVideoRecordingStart()
                 startTimer().start()
                 Toast.makeText(applicationContext,"Video Start",Toast.LENGTH_LONG).show()
-
             }
 
             override fun onVideoTaken(result: VideoResult) {
@@ -84,12 +97,17 @@ class MainActivity : AppCompatActivity() {
 
         })
 
-        binding.camera.takeVideoSnapshot(File(filesDir.absolutePath,"demoVideo.mp4"),5000)
+        binding.camera.takeVideoSnapshot(File(filesDir.absolutePath,"demoVideo.mp4"), Int.MAX_VALUE)
 
     }
 
     override fun onResume() {
         super.onResume()
+        binding.camera.open()
+    }
+
+    override fun onRestart() {
+        super.onRestart()
         binding.camera.open()
     }
 
